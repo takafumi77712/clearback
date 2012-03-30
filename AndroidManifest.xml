@@ -20,6 +20,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name="SubActivity"></activity>
     </application>
  <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.WRIGHT_EXTERNAL_STORAGE" />

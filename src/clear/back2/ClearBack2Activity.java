@@ -1,11 +1,13 @@
 package clear.back2;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import android.content.Context;
+import android.content.Intent;
 import android.hardware.Camera;
 import android.hardware.Camera.PictureCallback;
 import android.view.SurfaceHolder;
@@ -13,8 +15,12 @@ import android.view.SurfaceHolder.Callback;
 import android.view.SurfaceView;
 import android.app.Activity;
 import android.graphics.Bitmap;
+import android.graphics.Bitmap.CompressFormat;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.Display;
 import android.view.MotionEvent;
@@ -29,15 +35,12 @@ import android.view.View.OnClickListener;
 
 //main activity
 public class ClearBack2Activity extends Activity {
-	static Bitmap temp;
-	static int nnn = 0;
 	private static final String TAG = "Activity";
 	private static final int MENU_ID_MENU1 = 0;
-	private boolean visible = true;
 	private final int FP = ViewGroup.LayoutParams.FILL_PARENT; 
 	private final int WC = ViewGroup.LayoutParams.WRAP_CONTENT; 
 	static Button button;
-	static boolean c = false;
+	
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -45,18 +48,18 @@ public class ClearBack2Activity extends Activity {
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		final CameraView ccd = new CameraView(this);
-		//ƒJƒƒ‰‰æ–Ê
+		//ï¿½Jï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		LinearLayout l = new LinearLayout(this);
 		l.addView(ccd,createParam(dsize(true)-200, dsize(false)));
 
-		//ƒ{ƒ^ƒ“‰æ–Ê
+		//ï¿½{ï¿½^ï¿½ï¿½ï¿½ï¿½ï¿½
 		LinearLayout h = new LinearLayout(this);
 		// h.setOrientation(LinearLayout.VERTICAL);
 		l.addView(h);
 		setContentView(l);
 
 		button = new Button(this);
-		button.setText("B‰e");
+		button.setText("ï¿½Bï¿½e");
 		// 
 		button.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
@@ -65,14 +68,10 @@ public class ClearBack2Activity extends Activity {
 		h.addView(button, createParam(WC, WC));
 	}
 
-	public static boolean counterout(){
-		return c;
-	}
-
 	private LinearLayout.LayoutParams createParam(int width, int height){
 		return new LinearLayout.LayoutParams(width, height);
 	}   
-	//‰æ–ÊƒTƒCƒYw’è
+	//ï¿½ï¿½ÊƒTï¿½Cï¿½Yï¿½wï¿½ï¿½
 	public int dsize(boolean d){
 		WindowManager wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
 		Display display = wm.getDefaultDisplay();
@@ -86,12 +85,12 @@ public class ClearBack2Activity extends Activity {
 		}
 	}
 
-	//ƒJƒƒ‰“à•”class
+	//ï¿½Jï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½class
 	public class CameraView extends SurfaceView implements Callback ,PictureCallback {
 		public final Bitmap bmp =null;
 		static final int count = 0;
 		public   Camera camera = null;
-		//ƒtƒ@ƒCƒ‹‚Ì•Û‘¶æƒtƒHƒ‹ƒ_
+		//ï¿½tï¿½@ï¿½Cï¿½ï¿½ï¿½Ì•Û‘ï¿½ï¿½ï¿½tï¿½Hï¿½ï¿½ï¿½_
 		final String ROOT_PATH =
 				Environment.getExternalStorageDirectory() +
 				File.separator +
@@ -105,14 +104,14 @@ public class ClearBack2Activity extends Activity {
 			holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
 		}
 
-		//surface‹N“®‚Ìˆ—
+		//surfaceï¿½Nï¿½ï¿½ï¿½ï¿½ï¿½Ìï¿½ï¿½ï¿½
 		public void surfaceCreated(SurfaceHolder holder) {
 			try {
 				camera = Camera.open();
 				camera.setPreviewDisplay(holder);
 			} catch(IOException e) {
 			}
-			//SDƒJ[ƒh‚ªg—p‰Â”\‚©‚ÌŠm”F
+			//SDï¿½Jï¿½[ï¿½hï¿½ï¿½ï¿½gï¿½pï¿½Â”\ï¿½ï¿½ï¿½ÌŠmï¿½F
 			final File f = new File(ROOT_PATH);
 			if( !f.exists() ){
 				f.mkdir();
@@ -135,7 +134,7 @@ public class ClearBack2Activity extends Activity {
 			camera.startPreview();
 		}
 
-		//surfaceI—¹‚Ìˆ—
+		//surfaceï¿½Iï¿½ï¿½ï¿½ï¿½ï¿½Ìï¿½ï¿½ï¿½
 		public void surfaceDestroyed(SurfaceHolder holder) {
 			camera.setPreviewCallback(null); 
 			camera.stopPreview();
@@ -143,22 +142,19 @@ public class ClearBack2Activity extends Activity {
 			camera = null; 
 		}
 
-		//B‰eŒãˆ—‚Æ‰æ‘œ‚Ì•Û‘¶
-		//‚±‚±‚ÉB‰eŒãˆ—‚ğ’Ç‰Á‚µ‚Ä‚­‚¾‚³‚¢B
+		//ï¿½Bï¿½eï¿½ãˆï¿½ï¿½ï¿½Æ‰æ‘œï¿½Ì•Û‘ï¿½
+		//ï¿½ï¿½ï¿½ï¿½ï¿½ÉBï¿½eï¿½ãˆï¿½ï¿½ï¿½ï¿½Ç‰ï¿½ï¿½ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½B
 		public void onPictureTaken(byte[] data, Camera camera) {
-			Log.d(null, "onPictureTaken");
-			//@‰æ‘œ‚ğ•Û‘¶
-			final String path=
-					//ŠÔ‚Åƒtƒ@ƒCƒ‹–¼w’è
+			//Log.d(null, "onPictureTaken");
+			//ï¿½@ï¿½æ‘œï¿½ï¿½Û‘ï¿½
+			/*final String path=
+					//ï¿½ï¿½ï¿½Ô‚Åƒtï¿½@ï¿½Cï¿½ï¿½ï¿½ï¿½ï¿½wï¿½ï¿½
 					//ROOT_PATH + dateFormat.format(new Date()) + ".jpg";
 					
-					//ƒ_ƒCƒŒƒNƒg‚Éƒtƒ@ƒCƒ‹–¼w’è
+					//ï¿½_ï¿½Cï¿½ï¿½ï¿½Nï¿½gï¿½Éƒtï¿½@ï¿½Cï¿½ï¿½ï¿½ï¿½ï¿½wï¿½ï¿½
 					ROOT_PATH + "clearback" + ".jpg";
+			
 			FileOutputStream fos = null;
-			//SDƒJ[ƒh‚Öo—Í
-			//***’ˆÓ****
-			//SDƒJ[ƒh‚É•Û‘¶æ‚ÌƒtƒHƒ‹ƒ_‚ª–³‚¢ê‡ƒGƒ‰[‚Í‚«‚Ü‚·B
-			//•Û‘¶æ‚ÍROOT_PATH‚Åw’è@Œ»İ‚ÍSDƒJ[ƒh/ƒAƒvƒŠ–¼‚É‚È‚Á‚Ä‚¢‚Ü‚·B
 			try {
 				fos = new FileOutputStream(path);
 			} catch (FileNotFoundException e1) {
@@ -169,9 +165,9 @@ public class ClearBack2Activity extends Activity {
 				try {
 					fos.write(data);
 
-					Log.d(null, "onPictureTaken¬Œ÷");
+					Log.d(null, "onPictureTakenï¿½ï¿½ï¿½ï¿½");
 				} catch (IOException e1) {
-					Log.d(null, "onPictureTaken¸”s");
+					Log.d(null, "onPictureTakenï¿½ï¿½ï¿½s");
 					e1.printStackTrace();
 				}
 
@@ -182,35 +178,89 @@ public class ClearBack2Activity extends Activity {
 					e.printStackTrace();
 				}
 			}
+			Intent i = new Intent(getApplicationContext(),SubActivity.class);
+			 startActivity(i);
+			*/
+			
+			
+			Bitmap bmp = BitmapFactory.decodeByteArray(data, 0, data.length,null);	
+			
+			//Bitmap b = bmp.copy(Bitmap.Config.ARGB_8888, true); 
+			Matrix matrix = new Matrix();
+			matrix.postRotate(90);
+			int width = bmp.getWidth();
+			int height = bmp.getHeight();
+			Bitmap bmp2 = Bitmap.createBitmap(bmp, 0, 0, width, height, matrix, false); 
+			Log.d(null, "onPictureTaken");
+			ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			bmp2.compress(CompressFormat.JPEG, 100, bos);
+			final String path=
+			//ï¿½ï¿½ï¿½Ô‚Åƒtï¿½@ï¿½Cï¿½ï¿½ï¿½ï¿½ï¿½wï¿½ï¿½
+			//ROOT_PATH + dateFormat.format(new Date()) + ".jpg";
+			
+			//ï¿½_ï¿½Cï¿½ï¿½ï¿½Nï¿½gï¿½Éƒtï¿½@ï¿½Cï¿½ï¿½ï¿½ï¿½ï¿½wï¿½ï¿½
+			ROOT_PATH + "clearback" + ".jpg";
+			// bos.toByteArray() ã§ byte[] ãŒå–ã‚Œã‚‹ã€‚
+	FileOutputStream fos = null;
+	
+	
+	try {
+		fos = new FileOutputStream(path);
+	} catch (FileNotFoundException e1) {
+		Log.d("MyCameraView", e1.getMessage() );
+	}
 
-			//ƒvƒŒƒrƒ…[ÄŠJ
-			camera.startPreview();
+	if( fos != null){
+		try {
+			fos.write(bos.toByteArray());
+
+			Log.d(null, "onPictureTakenæˆåŠŸ");
+		} catch (IOException e1) {
+			Log.d(null, "onPictureTakenå¤±æ•—");
+			e1.printStackTrace();
 		}
 
-		//ƒvƒŒƒrƒ…[‰æ–Ê‚ğƒ^ƒbƒ`‚µ‚½‚Æ‚«‚Ì“®ì
-		//ƒn[ƒh‚ÌŒˆ’èƒ{ƒ^ƒ“ŠÜ‚İ‚Ü‚·
+		try {
+			fos.close();
+			fos = null;
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	Intent i = new Intent(getApplicationContext(),SubActivity.class);
+	 startActivity(i);
+	
+	
+			
+			
+			
+			//camera.startPreview();
+		}
+
+		//ï¿½vï¿½ï¿½ï¿½rï¿½ï¿½ï¿½[ï¿½ï¿½Ê‚ï¿½ï¿½^ï¿½bï¿½`ï¿½ï¿½ï¿½ï¿½ï¿½Æ‚ï¿½ï¿½Ì“ï¿½ï¿½ï¿½
+		//ï¿½nï¿½[ï¿½hï¿½ÌŒï¿½ï¿½ï¿½{ï¿½^ï¿½ï¿½ï¿½Ü‚İ‚Ü‚ï¿½
 		@Override
 		public boolean onTouchEvent(MotionEvent me) {
 			if(me.getAction()==MotionEvent.ACTION_DOWN  ) {
 
-				//xperia‚Ì‚İ
-				//’[––‚²‚Æ‚ÉƒI[ƒgƒtƒH[ƒJƒX‚Ìg—p•û–@‚ªˆá‚¤‚½‚ßAƒI[ƒgƒtƒH[ƒJƒX‚ÅƒGƒ‰[‚ğ“f‚­ê‡A
-				//autoFocus();‚ğƒRƒƒ“ƒgƒAƒEƒg‚µ‚Ä‚­‚¾‚³‚¢B‹ß“ú’†‚É‰ü‘P—\’èB
+				//xperiaï¿½Ì‚ï¿½
+				//ï¿½[ï¿½ï¿½ï¿½ï¿½ï¿½Æ‚ÉƒIï¿½[ï¿½gï¿½tï¿½Hï¿½[ï¿½Jï¿½Xï¿½Ìgï¿½pï¿½ï¿½@ï¿½ï¿½ï¿½á‚¤ï¿½ï¿½ï¿½ßAï¿½Iï¿½[ï¿½gï¿½tï¿½Hï¿½[ï¿½Jï¿½Xï¿½ÅƒGï¿½ï¿½ï¿½[ï¿½ï¿½fï¿½ï¿½ï¿½ê‡ï¿½A
+				//autoFocus();ï¿½ï¿½ï¿½Rï¿½ï¿½ï¿½ï¿½ï¿½gï¿½Aï¿½Eï¿½gï¿½ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Bï¿½ß“ï¿½É‰ï¿½Pï¿½\ï¿½ï¿½B
 				autoFocus();
 				camera.takePicture(null,null,this);
 			}
 			return true;
 		}
 
-		//main activity‚Å‚ÌB‰eƒ{ƒ^ƒ“‚Ì“®ì
+		//main activityï¿½Å‚ÌBï¿½eï¿½{ï¿½^ï¿½ï¿½ï¿½Ì“ï¿½ï¿½ï¿½
 		public boolean satuei() {
-			//xperia‚Ì‚İ
+			//xperiaï¿½Ì‚ï¿½
 			autoFocus();
 			camera.takePicture(null,null,this);
 			return true;
 		}
 
-		//ƒI[ƒgƒtƒH[ƒJƒX
+		//ï¿½Iï¿½[ï¿½gï¿½tï¿½Hï¿½[ï¿½Jï¿½X
 		public void autoFocus(){
 			if( camera != null ){
 				camera.autoFocus( new Camera.AutoFocusCallback() {
