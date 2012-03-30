@@ -1,6 +1,8 @@
 package clear.back2;
 
 import java.io.ByteArrayOutputStream;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -40,7 +42,6 @@ public class ClearBack2Activity extends Activity {
 	private final int FP = ViewGroup.LayoutParams.FILL_PARENT; 
 	private final int WC = ViewGroup.LayoutParams.WRAP_CONTENT; 
 	static Button button;
-	
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -48,30 +49,41 @@ public class ClearBack2Activity extends Activity {
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		final CameraView ccd = new CameraView(this);
-		//�J�������
+		//カメラ画面
 		LinearLayout l = new LinearLayout(this);
-		l.addView(ccd,createParam(dsize(true)-200, dsize(false)));
+		l.addView(ccd,createParam(dsize(true)-100, dsize(false)));
 
-		//�{�^�����
+		//ボタン画面
 		LinearLayout h = new LinearLayout(this);
 		// h.setOrientation(LinearLayout.VERTICAL);
 		l.addView(h);
 		setContentView(l);
-
-		button = new Button(this);
-		button.setText("�B�e");
+		
+		ImageButton imgbutton1 = new ImageButton(this);
+        imgbutton1.setImageResource(R.drawable.ic_launcher);
+        imgbutton1.setPadding(WC, WC, WC, WC);
+        h.addView(imgbutton1, createParam(WC, WC));
+        imgbutton1 .setOnClickListener(new OnClickListener() {
+			public void onClick(View v) {
+				ccd.satuei();
+			}});
+		
+		
+		
+		/*button = new Button(this);
+		//button.setText("撮影");
 		// 
 		button.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
 				ccd.satuei();
 			}});
-		h.addView(button, createParam(WC, WC));
+		h.addView(button, createParam(WC, WC));*/
 	}
 
 	private LinearLayout.LayoutParams createParam(int width, int height){
 		return new LinearLayout.LayoutParams(width, height);
 	}   
-	//��ʃT�C�Y�w��
+	//画面サイズ指定
 	public int dsize(boolean d){
 		WindowManager wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
 		Display display = wm.getDefaultDisplay();
@@ -85,12 +97,12 @@ public class ClearBack2Activity extends Activity {
 		}
 	}
 
-	//�J��������class
+	//カメラ内部class
 	public class CameraView extends SurfaceView implements Callback ,PictureCallback {
 		public final Bitmap bmp =null;
 		static final int count = 0;
 		public   Camera camera = null;
-		//�t�@�C���̕ۑ���t�H���_
+		//ファイルの保存先フォルダ
 		final String ROOT_PATH =
 				Environment.getExternalStorageDirectory() +
 				File.separator +
@@ -104,14 +116,14 @@ public class ClearBack2Activity extends Activity {
 			holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
 		}
 
-		//surface�N�����̏���
+		//surface起動時の処理
 		public void surfaceCreated(SurfaceHolder holder) {
 			try {
 				camera = Camera.open();
 				camera.setPreviewDisplay(holder);
 			} catch(IOException e) {
 			}
-			//SD�J�[�h���g�p�\���̊m�F
+			//SDカードに保存可能かの確認
 			final File f = new File(ROOT_PATH);
 			if( !f.exists() ){
 				f.mkdir();
@@ -134,7 +146,7 @@ public class ClearBack2Activity extends Activity {
 			camera.startPreview();
 		}
 
-		//surface�I�����̏���
+		//surface終了時の処理
 		public void surfaceDestroyed(SurfaceHolder holder) {
 			camera.setPreviewCallback(null); 
 			camera.stopPreview();
@@ -142,18 +154,27 @@ public class ClearBack2Activity extends Activity {
 			camera = null; 
 		}
 
-		//�B�e�㏈���Ɖ摜�̕ۑ�
-		//�����ɎB�e�㏈����ǉ����Ă��������B
+		//撮影処理後の画像の向きの修正と保存
 		public void onPictureTaken(byte[] data, Camera camera) {
-			//Log.d(null, "onPictureTaken");
-			//�@�摜��ۑ�
-			/*final String path=
-					//���ԂŃt�@�C�����w��
+
+			Bitmap bmp = BitmapFactory.decodeByteArray(data, 0, data.length,null);	
+			//Bitmap b = bmp.copy(Bitmap.Config.ARGB_8888, true); 
+			Matrix matrix = new Matrix();
+			matrix.postRotate(90);
+			int width = bmp.getWidth();
+			int height = bmp.getHeight();
+			Bitmap bmp2 = Bitmap.createBitmap(bmp, 0, 0, width, height, matrix, false); 
+			Log.d(null, "onPictureTaken");
+			ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			bmp2.compress(CompressFormat.JPEG, 100, bos);
+			// bos.toByteArray() で byte[] が取れる。
+			final String path=
+					//時間でファイル名の指定
 					//ROOT_PATH + dateFormat.format(new Date()) + ".jpg";
-					
-					//�_�C���N�g�Ƀt�@�C�����w��
+
+					//ダイレクトに指定
 					ROOT_PATH + "clearback" + ".jpg";
-			
+
 			FileOutputStream fos = null;
 			try {
 				fos = new FileOutputStream(path);
@@ -163,11 +184,11 @@ public class ClearBack2Activity extends Activity {
 
 			if( fos != null){
 				try {
-					fos.write(data);
+					fos.write(bos.toByteArray());
 
-					Log.d(null, "onPictureTaken����");
+					Log.d(null, "onPictureTaken成功");
 				} catch (IOException e1) {
-					Log.d(null, "onPictureTaken���s");
+					Log.d(null, "onPictureTaken失敗");
 					e1.printStackTrace();
 				}
 
@@ -179,88 +200,32 @@ public class ClearBack2Activity extends Activity {
 				}
 			}
 			Intent i = new Intent(getApplicationContext(),SubActivity.class);
-			 startActivity(i);
-			*/
-			
-			
-			Bitmap bmp = BitmapFactory.decodeByteArray(data, 0, data.length,null);	
-			
-			//Bitmap b = bmp.copy(Bitmap.Config.ARGB_8888, true); 
-			Matrix matrix = new Matrix();
-			matrix.postRotate(90);
-			int width = bmp.getWidth();
-			int height = bmp.getHeight();
-			Bitmap bmp2 = Bitmap.createBitmap(bmp, 0, 0, width, height, matrix, false); 
-			Log.d(null, "onPictureTaken");
-			ByteArrayOutputStream bos = new ByteArrayOutputStream();
-			bmp2.compress(CompressFormat.JPEG, 100, bos);
-			final String path=
-			//���ԂŃt�@�C�����w��
-			//ROOT_PATH + dateFormat.format(new Date()) + ".jpg";
-			
-			//�_�C���N�g�Ƀt�@�C�����w��
-			ROOT_PATH + "clearback" + ".jpg";
-			// bos.toByteArray() で byte[] が取れる。
-	FileOutputStream fos = null;
-	
-	
-	try {
-		fos = new FileOutputStream(path);
-	} catch (FileNotFoundException e1) {
-		Log.d("MyCameraView", e1.getMessage() );
-	}
-
-	if( fos != null){
-		try {
-			fos.write(bos.toByteArray());
-
-			Log.d(null, "onPictureTaken成功");
-		} catch (IOException e1) {
-			Log.d(null, "onPictureTaken失敗");
-			e1.printStackTrace();
-		}
-
-		try {
-			fos.close();
-			fos = null;
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-	Intent i = new Intent(getApplicationContext(),SubActivity.class);
-	 startActivity(i);
-	
-	
-			
-			
-			
+			startActivity(i);
+			Intent l = new Intent(getApplicationContext(),sub2activity.class);
+			startActivity(l);
 			//camera.startPreview();
 		}
-
-		//�v���r���[��ʂ��^�b�`�����Ƃ��̓���
-		//�n�[�h�̌���{�^���܂݂܂�
+		
+		//プレビュー画面をタッチしたときの動作
+		//ハードの決定ボタン含みます
 		@Override
 		public boolean onTouchEvent(MotionEvent me) {
 			if(me.getAction()==MotionEvent.ACTION_DOWN  ) {
-
-				//xperia�̂�
-				//�[�����ƂɃI�[�g�t�H�[�J�X�̎g�p��@���Ⴄ���߁A�I�[�g�t�H�[�J�X�ŃG���[��f���ꍇ�A
-				//autoFocus();���R�����g�A�E�g���Ă��������B�ߓ�ɉ�P�\��B
-				autoFocus();
+				//autoFocus();
 				camera.takePicture(null,null,this);
 			}
 			return true;
 		}
 
-		//main activity�ł̎B�e�{�^���̓���
+		//main activityでの撮影ボタンの動作
+		//基本的にonTouchEventと同じです
 		public boolean satuei() {
-			//xperia�̂�
-			autoFocus();
+			//autoFocus();
 			camera.takePicture(null,null,this);
 			return true;
 		}
 
-		//�I�[�g�t�H�[�J�X
+		//オートフォーカス
 		public void autoFocus(){
 			if( camera != null ){
 				camera.autoFocus( new Camera.AutoFocusCallback() {
