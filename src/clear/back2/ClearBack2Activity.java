@@ -7,11 +7,16 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
+import java.util.List;
+
 import android.content.Context;
 import android.content.Intent;
 import android.hardware.Camera;
 import android.hardware.Camera.PictureCallback;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.view.SurfaceHolder;
 import android.view.SurfaceHolder.Callback;
 import android.view.SurfaceView;
@@ -22,42 +27,61 @@ import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.os.Bundle;
 import android.os.Environment;
-import android.provider.MediaStore;
+import android.os.Handler;
 import android.util.Log;
 import android.view.Display;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewGroup.LayoutParams;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.LinearLayout;
 import android.widget.Toast;
 import android.view.View.OnClickListener;
 
 //main activity
-public class ClearBack2Activity extends Activity {
-	private static final String TAG = "Activity";
-	private static final int MENU_ID_MENU1 = 0;
-	private final int FP = ViewGroup.LayoutParams.FILL_PARENT; 
+public class ClearBack2Activity extends Activity implements SensorEventListener {
+	protected static final String TAG = "MAIN_ACTIVITY";
 	private final int WC = ViewGroup.LayoutParams.WRAP_CONTENT; 
 	static Button button;
-
+	public static int DYSPLAY_SIZE_W = 0;
+	public static int DYSPLAY_SIZE_H = 0;
+	private final int REPEAT_INTERVAL = 50;
+    private Handler handler = new Handler();
+    private Runnable runnable;
+    private SensorManager manager;
+    
+    private int Y = 0;
+   
+    
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
+		displaysize();
 		final CameraView ccd = new CameraView(this);
+		manager = (SensorManager)getSystemService(SENSOR_SERVICE);
 		//カメラ画面
 		LinearLayout l = new LinearLayout(this);
-		l.addView(ccd,createParam(dsize(true)-100, dsize(false)));
+		l.addView(ccd,createParam(DYSPLAY_SIZE_W, DYSPLAY_SIZE_H));
 
 		//ボタン画面
 		LinearLayout h = new LinearLayout(this);
 		// h.setOrientation(LinearLayout.VERTICAL);
-		l.addView(h);
+		//l.addView(h);
 		setContentView(l);
+		
+		
+		final overlay overlay = new overlay(this);
+		
+		addContentView(overlay, new LayoutParams(LayoutParams.FILL_PARENT,
+		        LayoutParams.FILL_PARENT));
+		
+		
+		
+		
 		
 		ImageButton imgbutton1 = new ImageButton(this);
         imgbutton1.setImageResource(R.drawable.ic_launcher);
@@ -68,7 +92,14 @@ public class ClearBack2Activity extends Activity {
 				ccd.satuei();
 			}});
 		
-		
+        
+        
+        
+       // Intent i = new Intent(ClearBack2Activity.this,camera.class);
+        //i.putExtra("CAMERA", ccd.satuei());
+        //startActivity(i);
+        
+      
 		
 		/*button = new Button(this);
 		//button.setText("撮影");
@@ -78,24 +109,60 @@ public class ClearBack2Activity extends Activity {
 				ccd.satuei();
 			}});
 		h.addView(button, createParam(WC, WC));*/
-	}
+        runnable = new Runnable() {
+            @Override
+            public void run() {
 
+                //2.繰り返し処
+            	Log.d(TAG, "********onDrowivent       "+Y+"    ****************");
+            	if(70<Y){
+            		overlay.kaiten();
+            		
+            	}
+            	if(Y==0){
+            		overlay.kaiten2();
+            	}
+                //3.次回処理をセット
+                handler.postDelayed(this, REPEAT_INTERVAL);
+            }
+        };
+        
+      //1.初回実行
+        handler.postDelayed(runnable, REPEAT_INTERVAL);
+	}
+	
+	
+	
+	
+	
+	
+	
+	
 	private LinearLayout.LayoutParams createParam(int width, int height){
 		return new LinearLayout.LayoutParams(width, height);
 	}   
-	//画面サイズ指定
-	public int dsize(boolean d){
+	//画面サイズ取得
+	public void displaysize(){
 		WindowManager wm = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
 		Display display = wm.getDefaultDisplay();
+		DYSPLAY_SIZE_W = display.getWidth();
+		DYSPLAY_SIZE_H = display.getHeight();
 		Log.d("display", "w:" + display.getWidth());
 		Log.d("display", "h:" + display.getHeight());
-		if(d==true){
-			return display.getWidth();
-		}
-		else{
-			return display.getHeight();
-		}
 	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 
 	//カメラ内部class
 	public class CameraView extends SurfaceView implements Callback ,PictureCallback {
@@ -199,6 +266,9 @@ public class ClearBack2Activity extends Activity {
 					e.printStackTrace();
 				}
 			}
+			
+			
+			 
 			Intent i = new Intent(getApplicationContext(),SubActivity.class);
 			startActivity(i);
 			Intent l = new Intent(getApplicationContext(),sub2activity.class);
@@ -210,10 +280,15 @@ public class ClearBack2Activity extends Activity {
 		//ハードの決定ボタン含みます
 		@Override
 		public boolean onTouchEvent(MotionEvent me) {
-			if(me.getAction()==MotionEvent.ACTION_DOWN  ) {
-				//autoFocus();
-				camera.takePicture(null,null,this);
+			if(10<=me.getX() && me.getX()<=200 && 10<=me.getY() && me.getY()<=200 && me.getAction()==MotionEvent.ACTION_DOWN) {
+				autoFocus();
 			}
+				else if(DYSPLAY_SIZE_W-100<=me.getX() && me.getX()<=DYSPLAY_SIZE_W &&
+						0<=me.getY() && me.getY()<= 100 && me.getAction()==MotionEvent.ACTION_DOWN){
+					autoFocus();
+					camera.takePicture(null,null,this);
+			}
+			
 			return true;
 		}
 
@@ -237,7 +312,73 @@ public class ClearBack2Activity extends Activity {
 			}
 		}
 	}
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+	@Override
+	protected void onStop() {
+	 // TODO Auto-generated method stub
+	 super.onStop();
+	 // Listenerの登録解除
+	 manager.unregisterListener(this);;
+	 }
+
+	 @Override
+	 protected void onResume() {
+	// TODO Auto-generated method stub
+	 super.onResume();
+	 // Listenerの登録
+	 List<Sensor> sensors = manager.getSensorList(Sensor.TYPE_ORIENTATION);
+	 if(sensors.size() > 0) {
+	 Sensor s = sensors.get(0);
+	 manager.registerListener(this, s, SensorManager.SENSOR_DELAY_UI);
+	 }
+	 }
+
+
+
+
+
+
+
+
+	@Override
+	public void onAccuracyChanged(Sensor sensor, int accuracy) {
+		// TODO 自動生成されたメソッド・スタブ
+		
+	}
+
+
+
+
+
+
+
+
+	@Override
+	public void onSensorChanged(SensorEvent event) {
+		int senser = (int) event.values[1];
+		if(event.sensor.getType() == Sensor.TYPE_ORIENTATION) {
+			Y = (int) event.values[2];
+			
+	
+			}
+		}
+	
+	}
+
 
 
 
