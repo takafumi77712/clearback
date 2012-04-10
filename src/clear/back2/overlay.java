@@ -16,17 +16,34 @@ import android.view.View;
 
 public class overlay extends View {
 	
+	
+	
 	private static final String TAG = null;
 	private Bitmap image;
+	private Bitmap image2;
     int width;
     int height;
+    
     public overlay(Context context) {
         super(context);
         Resources r = context.getResources();
-        image = BitmapFactory.decodeResource(r, R.drawable.ic_launcher2);
-        setDrawingCacheEnabled(true);            
+        image = BitmapFactory.decodeResource(r, R.drawable.ic_launcher);
+        Matrix matrix = new Matrix();
+        matrix.postRotate(270);
+        matrix.postScale(2.0f, 2.0f);
+		int width = image.getWidth();
+		int height = image.getHeight();
+		image = Bitmap.createBitmap(image, 0, 0, width, height, matrix, false); 
+		image2 = image;
+		ClearBack2Activity.POINT_X = image.getWidth();
+		ClearBack2Activity.POINT_Y = image.getHeight();
+        setDrawingCacheEnabled(true);  
+        
         
     }
+    
+   
+    
     
     protected void onSizeChanged(int w, int h, int oldw, int oldh){
         //ビューのサイズを取得
@@ -40,10 +57,10 @@ public class overlay extends View {
         
         canvas.drawColor(Color.TRANSPARENT);
         Paint paint = new Paint();
-        int w = image.getWidth();
-        int h = image.getHeight();
+        int w = image2.getWidth();
+        int h = image2.getHeight();
         Rect src = new Rect(0, 0, w, h);
-        canvas.drawBitmap(image, ClearBack2Activity.DYSPLAY_SIZE_W-100,0, paint);
+        canvas.drawBitmap(image2, ClearBack2Activity.DYSPLAY_SIZE_W-image.getWidth(),(ClearBack2Activity.DYSPLAY_SIZE_H/2)-(image.getHeight()/2), paint);
         
         
         
@@ -56,17 +73,17 @@ public class overlay extends View {
 	        
     }
     
-   public void kaiten(){
-	   Log.d(TAG, "********onDrowivent                      ****************");
-	   Resources r = getResources();
-	    image = BitmapFactory.decodeResource(r, R.drawable.ic_launcher);
+   public void kaiten(int ichi){
+	   
+		   Matrix matrix = new Matrix();
+			matrix.postRotate(ichi);
+			int width = image.getWidth();
+			int height = image.getHeight();
+			image2 = Bitmap.createBitmap(image, 0, 0, width, height, matrix, false); 
+	                 
+	        
 	   invalidate();
    }
    
-   public void kaiten2(){
-	   Resources r = getResources();
-	    image = BitmapFactory.decodeResource(r, R.drawable.ic_launcher2);
-	   invalidate();
-
-   }
+   
 }

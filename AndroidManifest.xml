@@ -25,7 +25,9 @@
         <activity android:name="sub2activity"
             android:theme="@android:style/Theme.Translucent"></activity>
         <activity android:name="camera"></activity>
+        <activity android:name="OAuthActivity"></activity>
     </application>
  <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.WRIGHT_EXTERNAL_STORAGE" />
+      <uses-permission android:name="android.permission.INTERNET" />
 </manifest>

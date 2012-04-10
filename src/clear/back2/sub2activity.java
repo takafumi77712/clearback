@@ -1,6 +1,20 @@
 package clear.back2;
 
+import java.io.File;
+
+
+import twitter4j.Status;
+import twitter4j.StatusUpdate;
+import twitter4j.Twitter;
+import twitter4j.TwitterException;
+import twitter4j.TwitterFactory;
+import twitter4j.conf.Configuration;
+import twitter4j.conf.ConfigurationBuilder;
+import twitter4j.auth.AccessToken;
+import twitter4j.auth.OAuthAuthorization;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -14,16 +28,34 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.view.View.OnClickListener;
+import android.content.ContentResolver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.graphics.Color;
 
 public class sub2activity extends Activity {
 	static Button button;
+	final String filePath =
+			Environment.getExternalStorageDirectory() +
+			File.separator +
+			"ClearBack2" +
+			File.separator + "clearback" + ".jpg";
+	SharedPreferences pref;
+	
+    SharedPreferences.Editor editor;
 	  private final int WRAP_CONTENT = ViewGroup.LayoutParams.WRAP_CONTENT;
 	  private final int WC = ViewGroup.LayoutParams.WRAP_CONTENT;
 	  private int MAX_TEXT_TWITTER = 140;
-	  
-	  
+	  private static final String CALLBACK = "https://www.google.co.jp/";
+	protected static final String TAG = null;
+	  String consumerKey = "tgVo7M2aZtlvsoXkYK25uQ";
+	  String consumerSecret = "	Ni4WueS2BSl5lso2EV78zoUgDjVF9gFk4Y7CiZKQ4j8";
+		String oAuthAccessToken = "549775270-4ZNEqzXDZGH97lJxowoHjbEMpILDH4Eqhgr1aA7O";
+	     String oAuthAccessTokenSecret = "bCkt9XBx8xesIftaFoJjn73NkztHgfos1B7j6AQWGg";
+	     private OAuthAuthorization mOauth;
+	     private Configuration mConf;
 	    @Override
 	    protected void onCreate(Bundle icicle) {
 	        super.onCreate(icicle);
@@ -51,15 +83,29 @@ public class sub2activity extends Activity {
 			LinearLayout h = new LinearLayout(this);
 			// h.setOrientation(LinearLayout.VERTICAL);
 			l.addView(h);
-			setContentView(l);
-
+			setContentView(l);			
+			
 			button = new Button(this);
 			button.setText("アップロード");
 			button.setOnClickListener(new OnClickListener() {
 				public void onClick(View v) {
 					String text = edit1.getText().toString();
+				
+					
+					
+					
+					
+					
+					
 					MAX_TEXT_TWITTER = MAX_TEXT_TWITTER - text.length();
 					Log.d(null, text);
+					try {
+						tweet(text);
+					} catch (TwitterException e) {
+						Log.d(null, "cccccccccccccccccccccccccccccccccccccccccccccccccc");
+
+						e.printStackTrace();
+					}
 				}});
 			h.addView(button, createParam(WC, WC));
 		}
@@ -68,5 +114,16 @@ public class sub2activity extends Activity {
 		private LinearLayout.LayoutParams createParam(int width, int height){
 			return new LinearLayout.LayoutParams(width, height);
 		}   
-		//画面サイズ指定
+		
+		public void tweet(String text) throws TwitterException {
+			Twitter mTwitter = new TwitterFactory().getInstance();
+            mTwitter.setOAuthConsumer(consumerKey, consumerSecret);
+            mTwitter.setOAuthAccessToken(new AccessToken(oAuthAccessToken, oAuthAccessTokenSecret));
+            StatusUpdate status = new StatusUpdate(text);
+            ContentResolver resolver = getContentResolver();
+            final StatusUpdate status2 = new StatusUpdate("画像投稿のテスト");
+            status.media(new File(filePath));
+            mTwitter.updateStatus(status);
 		}
+		}
+		

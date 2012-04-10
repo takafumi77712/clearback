@@ -44,9 +44,11 @@ import android.view.View.OnClickListener;
 public class ClearBack2Activity extends Activity implements SensorEventListener {
 	protected static final String TAG = "MAIN_ACTIVITY";
 	private final int WC = ViewGroup.LayoutParams.WRAP_CONTENT; 
-	static Button button;
 	public static int DYSPLAY_SIZE_W = 0;
 	public static int DYSPLAY_SIZE_H = 0;
+	public static int POINT_X;
+    public static int POINT_Y;
+    public static int pass = 0;
 	private final int REPEAT_INTERVAL = 50;
     private Handler handler = new Handler();
     private Runnable runnable;
@@ -114,13 +116,19 @@ public class ClearBack2Activity extends Activity implements SensorEventListener 
             public void run() {
 
                 //2.繰り返し処
-            	Log.d(TAG, "********onDrowivent       "+Y+"    ****************");
+            	//Log.d(TAG, "********onDrowivent       "+Y+"    ****************");
             	if(70<Y){
-            		overlay.kaiten();
-            		
+            		pass = 90;
+            		overlay.kaiten(pass);
             	}
+            	if(Y<-70){
+            		pass = 270;
+            		overlay.kaiten(pass);
+            	}
+            	
             	if(Y==0){
-            		overlay.kaiten2();
+            		pass = 0;
+            		overlay.kaiten(pass);
             	}
                 //3.次回処理をセット
                 handler.postDelayed(this, REPEAT_INTERVAL);
@@ -227,7 +235,7 @@ public class ClearBack2Activity extends Activity implements SensorEventListener 
 			Bitmap bmp = BitmapFactory.decodeByteArray(data, 0, data.length,null);	
 			//Bitmap b = bmp.copy(Bitmap.Config.ARGB_8888, true); 
 			Matrix matrix = new Matrix();
-			matrix.postRotate(90);
+			matrix.postRotate(pass+90);
 			int width = bmp.getWidth();
 			int height = bmp.getHeight();
 			Bitmap bmp2 = Bitmap.createBitmap(bmp, 0, 0, width, height, matrix, false); 
@@ -246,7 +254,7 @@ public class ClearBack2Activity extends Activity implements SensorEventListener 
 			try {
 				fos = new FileOutputStream(path);
 			} catch (FileNotFoundException e1) {
-				Log.d("MyCameraView", e1.getMessage() );
+				//Log.d("MyCameraView", e1.getMessage() );
 			}
 
 			if( fos != null){
@@ -281,11 +289,11 @@ public class ClearBack2Activity extends Activity implements SensorEventListener 
 		@Override
 		public boolean onTouchEvent(MotionEvent me) {
 			if(10<=me.getX() && me.getX()<=200 && 10<=me.getY() && me.getY()<=200 && me.getAction()==MotionEvent.ACTION_DOWN) {
-				autoFocus();
+				//autoFocus();
 			}
-				else if(DYSPLAY_SIZE_W-100<=me.getX() && me.getX()<=DYSPLAY_SIZE_W &&
-						0<=me.getY() && me.getY()<= 100 && me.getAction()==MotionEvent.ACTION_DOWN){
-					autoFocus();
+				else if(DYSPLAY_SIZE_W-POINT_X<=me.getX() && me.getX()<=DYSPLAY_SIZE_W &&
+						(DYSPLAY_SIZE_H/2)-(POINT_Y/2)<=me.getY() && me.getY()<= (DYSPLAY_SIZE_H/2)+(POINT_Y/2) && me.getAction()==MotionEvent.ACTION_DOWN){
+					//autoFocus();
 					camera.takePicture(null,null,this);
 			}
 			
